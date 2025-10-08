@@ -1,10 +1,10 @@
-FROM python:3.11 AS base
+FROM python:3.11-slim AS base
 
 ENV PYTHONUNBUFFERED 1
 
 #RUN dpkg --add-architecture i386
 RUN apt-get update && \
-    apt-get install -y \
+    apt-get install --no-install-recommends -y \
         git \
         libpq-dev \
         postgresql-client \
@@ -16,9 +16,13 @@ RUN apt-get update && \
         texlive-lang-european \
         texlive-lang-czechslovak \
         texlive-pstricks \
-        ghostscript \
         texlive-fonts-recommended \
+        tex-gyre \
+        ghostscript \
+        make \
         gcc \
+        g++ \
+        libc6-dev \
         sudo \
         libstdc++6 \
         zlib1g \
@@ -28,7 +32,8 @@ RUN apt-get update && \
         python3-pip \
         nodejs \
         npm && \
-    apt-get clean
+    apt-get clean && \
+    rm -rf /usr/share/doc/texlive*
 
 # This is oioioi user linux uid. Setting it is useful in development.
 # By default we use an unused uid of 1234.
@@ -75,7 +80,7 @@ WORKDIR /sio2/deployment
 RUN mkdir -p /sio2/deployment/logs/{supervisor,runserver}
 
 # The stage below is independent of base and can be built in parallel to optimize build time.
-FROM python:3.11 AS development-sandboxes
+FROM python:3.11-slim AS development-sandboxes
 
 ENV DOWNLOAD_DIR=/sio2/sandboxes
 ENV MANIFEST_URL=https://downloads.sio2project.mimuw.edu.pl/sandboxes/Manifest
@@ -84,7 +89,7 @@ ENV MANIFEST_URL=https://downloads.sio2project.mimuw.edu.pl/sandboxes/Manifest
 ADD $MANIFEST_URL /sio2/Manifest
 
 RUN apt-get update && \
-    apt-get install -y curl wget bash && \
+    apt-get install --no-install-recommends -y curl wget bash && \
     apt-get clean
 
 COPY download_sandboxes.sh /download_sandboxes.sh
@@ -93,7 +98,10 @@ RUN chmod +x /download_sandboxes.sh
 # Run script to download sandbox data from the given Manifest.
 RUN ./download_sandboxes.sh -q -y -d $DOWNLOAD_DIR -m $MANIFEST_URL
 
-FROM base AS development
+# This additional stage allows for not including the downloaded sandboxes twice
+# in the final image. When BuildKit will be more widespread as the default
+# in docker installations, this can be replaced with `RUN --mount`.
+FROM base AS populated_filetracker
 
 COPY --from=development-sandboxes /sio2/sandboxes /sio2/sandboxes
 RUN chmod +x /sio2/oioioi/download_sandboxes.sh
@@ -102,3 +110,6 @@ RUN ./manage.py supervisor > /dev/null --daemonize --nolaunch=uwsgi && \
     /sio2/oioioi/wait-for-it.sh -t 60 "127.0.0.1:9999" && \
     ./manage.py upload_sandboxes_to_filetracker -d /sio2/sandboxes && \
     ./manage.py supervisor stop all
+
+FROM base AS development
+COPY --from=populated_filetracker /sio2/deployment/media /sio2/deployment/media
