@@ -35,6 +35,6 @@ runs:
   - name: Install python dependencies
     run: |
       uv pip install --upgrade wheel setuptools
-      python setup.py install_egg_info
+      #python setup.py install_egg_info
       uv pip install --upgrade -r requirements.txt
     shell: sh
