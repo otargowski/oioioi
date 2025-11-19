@@ -34,6 +34,5 @@ runs:
 
   - name: Install python dependencies
     run: |
-      uv pip install wheel setuptools
       uv pip install -r requirements.txt
     shell: sh
