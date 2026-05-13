@@ -18,6 +18,8 @@
 .env.test.local
 .env.production.local
 
+pnpm-debug.log
+
 /.vscode
 /cypress/screenshots
 
