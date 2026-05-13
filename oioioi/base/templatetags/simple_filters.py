@@ -3,7 +3,7 @@ import types
 from copy import copy
 
 from django import template
-from django.forms import CheckboxInput, CheckboxSelectMultiple, RadioSelect
+from django.forms import CheckboxInput, CheckboxSelectMultiple, RadioSelect, Select, SelectMultiple
 from django.utils.html import escapejs
 from django.utils.safestring import mark_safe
 
@@ -27,6 +27,11 @@ def is_checkbox_select_multiple(field):
 @register.filter
 def is_radioselect(field):
     return isinstance(field.field.widget, RadioSelect)
+
+
+@register.filter
+def is_select(field):
+    return isinstance(field.field.widget, (Select, SelectMultiple))
 
 
 @register.filter
