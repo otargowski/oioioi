@@ -213,6 +213,7 @@ class TestRunContestControllerMixin:
             score_report = ScoreReport.objects.get(submission_report=report)
             submission.status = score_report.status
             submission.score = score_report.score  # Should be None
+            submission.max_score = score_report.max_score  # Should be None
         except ObjectDoesNotExist:
             if SubmissionReport.objects.filter(submission=submission, status="ACTIVE", kind="FAILURE"):
                 submission.status = "SE"
@@ -272,6 +273,8 @@ class TestRunContestControllerMixin:
         if testrun_report:
             input_is_zip = is_zipfile(testrun_report.submission_report.submission.programsubmission.testrunprogramsubmission.input_file.read_using_cache())
 
+        show_mem_used = testrun_report.mem_used > 0
+
         return render_to_string(
             template,
             request=request,
@@ -282,6 +285,7 @@ class TestRunContestControllerMixin:
                 "testrun_report": testrun_report,
                 "output_container_id_prefix": output_container_id_prefix,
                 "input_is_zip": input_is_zip,
+                "show_mem_used": show_mem_used,
             },
         )
 

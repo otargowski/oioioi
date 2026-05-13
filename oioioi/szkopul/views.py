@@ -10,16 +10,9 @@ from oioioi.contests.processors import recent_contests
 from oioioi.contests.utils import visible_contests_queryset_old
 from oioioi.problems.utils import filter_my_all_visible_submissions
 
-# navbar_links_registry.register(
-#     name='courses',
-#     text=_("Kursy"),
-#     url_generator=lambda request: 'https://kursy.szkopul.edu.pl',
-#     order=400,
-# )
-
 navbar_links_registry.register(
     name="courses",
-    text=_("Kursy"),
+    text=_("Courses"),
     url_generator=lambda request: "https://kursy.szkopul.edu.pl",
     order=400,
 )
@@ -50,12 +43,16 @@ def main_page_view(request):
         # limit queryset size, because filtering all submissions is slow
         queryset = queryset[:to_show]
         limit_queryset_ids = [submission.id for submission in queryset]
-        queryset = Submission.objects.filter(id__in=limit_queryset_ids).select_related(
-            "user",
-            "problem_instance",
-            "problem_instance__contest",
-            "problem_instance__round",
-            "problem_instance__problem",
+        queryset = (
+            Submission.objects.filter(id__in=limit_queryset_ids)
+            .select_related(
+                "user",
+                "problem_instance",
+                "problem_instance__contest",
+                "problem_instance__round",
+                "problem_instance__problem",
+            )
+            .prefetch_related("problem_instance__problem__names")
         )
 
         submissions_list = filter_my_all_visible_submissions(request, queryset).order_by("-date")
