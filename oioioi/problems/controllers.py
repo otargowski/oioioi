@@ -683,3 +683,6 @@ class ProblemController(RegisteredSubclassesBase, ObjectWithMixins):
 
     def allow_test_runs(self, request):
         return True
+
+    def supports_reuploads(self):
+        return True

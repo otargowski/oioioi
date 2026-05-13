@@ -5,7 +5,7 @@
 {% block confirmation_header %}{% trans "Confirm rejudge" %}{% endblock %}
 {% block confirmation_form_explanation %}
     <p>
-        {% trans "Something about this problem has changed. If the change was trivial (like a typo) then rejudge is not needed." %}
+        {% trans "Something about the problems has changed. If the change was trivial (like a typo) then rejudge is not needed." %}
         {% trans "If the tests for the problem have changed then you should proceed with a rejudge." %}
     </p>
     <p>
@@ -45,9 +45,31 @@
             </button>
         </div>
 
+        {% if problem_instances %}
+            <div class="mb-3">
+                <strong>{% trans "Problems to be rejudged:" %}</strong>
+                <ul class="list-group">
+                    {% for pi in problem_instances %}
+                        <li class="list-group-item">
+                            {{ pi.problem.name }} ({{ pi.short_name }})
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <input type="hidden" name="ids" value="{% for pi in problem_instances %}{% if not forloop.first %},{% endif %}{{ pi.id }}{% endfor %}">
+        {% endif %}
+
         <p>{% trans "Are you sure?" %}</p>
 
-        <div class="form-group">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="post" value="yes"/>
+        <input type="hidden" name="date_from" value="{{ date_from }}"/>
+        <input type="hidden" name="date_to" value="{{ date_to }}"/>
+        {% if last_only %}
+        <input type="hidden" name="last_only" value="on"/>
+        {% endif %}
+        <div class="mb-3 form-group">
             <button type="submit" name="post" value="yes" class="btn btn-danger">
                 {% trans "Yes, I am sure." %}
             </button>

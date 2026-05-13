@@ -359,7 +359,13 @@ class ProblemInstanceAdmin(admin.ModelAdmin):
     list_display = ("name_link", "short_name_link", "round", "package", "actions_field")
     readonly_fields = ("contest", "problem")
     ordering = ("-round__start_date", "short_name")
-    actions = ["attach_problems_to_another_contest", "assign_problems_to_a_round", "delete_problems"]
+    actions = [
+        "attach_problems_to_another_contest",
+        "assign_problems_to_a_round",
+        "delete_problems",
+        "download_packages",
+        "rejudge_multiple_problems",
+    ]
 
     def _attach_problem_ids_to_url(self, queryset, url_name):
         """Helper function to create a URL with problem ids as query parameters."""
@@ -380,6 +386,14 @@ class ProblemInstanceAdmin(admin.ModelAdmin):
     @action(description=_("Delete problems"))
     def delete_problems(self, request, queryset):
         return redirect(self._attach_problem_ids_to_url(queryset, "delete_problems"))
+
+    @action(description=_("Download packages"))
+    def download_packages(self, request, queryset):
+        return redirect(self._attach_problem_ids_to_url(queryset, "download_problems_packages"))
+
+    @action(description=_("Rejudge multiple problems"))
+    def rejudge_multiple_problems(self, request, queryset):
+        return redirect(self._attach_problem_ids_to_url(queryset, "rejudge_multiple_problems"))
 
     def __init__(self, *args, **kwargs):
         # creating a thread local variable to store the request
@@ -531,7 +545,7 @@ class ProblemInstanceAdmin(admin.ModelAdmin):
         # This is available (as a list) without additional DB queries for
         # every `instance` thanks to .get_custom_list_prefetch_related().
         packages = instance.problem.problempackage_set.all()
-        problem_package = packages[0] if packages else None
+        problem_package = next((p for p in packages if p.status == "OK"), None)
         request = self._request_local.request
         if problem_package and problem_package.package_file and can_admin_problem(request, instance.problem):
             href = reverse("download_package", kwargs={"package_id": str(problem_package.id)})

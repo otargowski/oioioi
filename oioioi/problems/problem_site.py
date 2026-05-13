@@ -225,7 +225,7 @@ def problem_site_secret_key(request, problem):
 @problem_site_tab(_("Settings"), key="settings", order=600, condition=can_admin_problem)
 def problem_site_settings(request, problem):
     _, administered_recent_contests = generate_add_to_contest_metadata(request)
-    package = ProblemPackage.objects.filter(problem=problem).first()
+    package = ProblemPackage.objects.filter(problem=problem, status="OK").first()
     problem_instance = get_object_or_404(ProblemInstance, id=problem.main_problem_instance_id)
     model_solutions = generate_model_solutions_context(request, problem_instance)
     extra_actions = problem.controller.get_extra_problem_site_actions(problem)
@@ -241,6 +241,7 @@ def problem_site_settings(request, problem):
             "model_solutions": model_solutions,
             "can_admin_problem": can_admin_problem(request, problem),
             "extra_actions": extra_actions,
+            "unsupported_reuploads": not problem.controller.supports_reuploads(),
         },
     )
 
@@ -380,9 +381,8 @@ def problem_site_package_download_file(request, problem):
                             visibility=problem.visibility,
                         )
                     except Exception as e:
-                        logger.error(
+                        logger.exception(
                             "Error processing package",
-                            exc_info=True,
                             extra={"omit_sentry": True},
                         )
                         form._errors["__all__"] = form.error_class([smart_str(e)])
