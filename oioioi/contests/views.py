@@ -70,7 +70,7 @@ from oioioi.contests.utils import (
     is_contest_observer,
     stringify_problems_limits,
     visible_contests,
-    visible_contests_queryset,
+    visible_filtered_contests,
     visible_filtered_contests_as_django_queryset,
     visible_problem_instances,
     visible_rounds,
@@ -1240,7 +1240,7 @@ def unarchive_contest(request):
 
 
 def filter_contests_view(request, filter_value=""):
-    contests = set(visible_contests_queryset(request, filter_value))
+    contests = visible_filtered_contests(request, filter_value)
     contests = sorted(contests, key=lambda x: x.creation_date, reverse=True)
 
     context = {
