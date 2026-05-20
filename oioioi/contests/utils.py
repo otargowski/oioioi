@@ -400,16 +400,6 @@ def used_controllers():
 
 def visible_contests_as_django_queryset(request):
     """Returns query set of contests visible to the logged in user."""
-    if request.GET.get("living", "safely") == "dangerously":
-        visible_query = Contest.objects.none()
-        for controller_name in used_controllers():
-            controller_class = import_string(controller_name)
-            # HACK: we pass None contest just to call visible_contests_query.
-            # This is a workaround for mixins not taking classmethods very well.
-            controller = controller_class(None)
-            subquery = Contest.objects.filter(controller_name=controller_name).filter(controller.registration_controller().visible_contests_query(request))
-            visible_query = visible_query.union(subquery, all=False)
-        return visible_query
     visible_query = Q_always_false()
     for controller_name in used_controllers():
         controller_class = import_string(controller_name)
